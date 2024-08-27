@@ -1,0 +1,7 @@
+uvicorn[standard]==0.20.0
+gunicorn==23.0.0
+fastapi[all]==0.88.0
+Flask==2.0.2
+Jinja2==3.0.3
+Werkzeug==2.0.3
+

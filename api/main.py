@@ -4,7 +4,7 @@ import sqlite3
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import sqlite3
-from typing import Optional
+from typing import List
 
 version = f"{sys.version_info.major}.{sys.version_info.minor}"
 
@@ -42,7 +42,7 @@ def init_db():
 init_db()
 
 # Ruta para crear un nuevo recordatorio (Alta)
-@app.post("/recordatorios")
+@app.post("/recordatorio")
 def create_recordatorio(recordatorio: Recordatorio):
     conn = sqlite3.connect('recordatorios.db')
     c = conn.cursor()
@@ -52,6 +52,18 @@ def create_recordatorio(recordatorio: Recordatorio):
     conn.close()
 
     return {"message": "Recordatorio creado con \u00e9xito"}
+
+# Ruta para obtener la lista de recordatorios
+@app.get("/recordatorios", response_model=List[Recordatorio])
+async def get_recordatorios():
+    conn = sqlite3.connect('recordatorios.db')
+    c = conn.cursor()
+    c.execute("SELECT id, titulo, descripcion, fecha, hora FROM recordatorios")
+    rows = c.fetchall()
+    conn.close()
+
+    recordatorios = [Recordatorio(id=row[0],titulo=row[1], descripcion=row[2], fecha=row[3], hora=row[4]) for row in rows]
+    return recordatorios
 
 if __name__ == '__main__':
     import uvicorn

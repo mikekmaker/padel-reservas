@@ -130,7 +130,7 @@ async def get_reservas():
 
 # Database model for the Usuario
 class Usuario(BaseModel):
-    usuarioid: int
+    usuarioId: int
     alias: str
     contrasena: str
     nombre: str
@@ -142,8 +142,8 @@ class Usuario(BaseModel):
     telefono: str
     nivel: str
     tipoJuego: str
-    fotoperfil: Optional[str]  # Assuming a base64 string
-    idtipousuario: int
+    fotoPerfil: Optional[str]  # Assuming a base64 string
+    idTipoUsuario: int
 
 # Conectar a la base de datos y crear la tabla si no existe
 def init_db():
@@ -153,7 +153,7 @@ def init_db():
               CREATE TABLE IF NOT EXISTS usuarios
               (usuarioid INTEGER PRIMARY KEY AUTOINCREMENT,
               alias TEXT,
-              contrasena,
+              contrasena TEXT,
               nombre TEXT,
               apellido TEXT,
               genero TEXT,
@@ -163,8 +163,8 @@ def init_db():
               telefono TEXT,
               nivel TEXT,
               tipoJuego TEXT,
-              fotoperfil TEXT,
-              idtipousuario INTEGER)
+              fotoPerfil TEXT,
+              idTipoUsuario INTEGER)
               ''')
     conn.commit()
     conn.close()
@@ -177,12 +177,12 @@ async def create_usuario(usuario: Usuario):
     c = conn.cursor()
     c.execute("""
         INSERT INTO usuarios 
-        (alias, contrasena, nombre, apellido, genero, edad, direccion, email, telefono, nivel, tipoJuego, fotoperfil, idtipousuario) 
+        (alias, contrasena, nombre, apellido, genero, edad, direccion, email, telefono, nivel, tipoJuego, fotoPerfil, idTipoUsuario) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (usuario.alias, usuario.contrasena, usuario.nombre, usuario.apellido, usuario.genero, usuario.edad,
          usuario.direccion, usuario.email, usuario.telefono, usuario.nivel, usuario.tipoJuego, 
-         usuario.fotoperfil, usuario.idtipousuario)
+         usuario.fotoPerfil, usuario.idTipoUsuario)
     )
     conn.commit()
     conn.close()
@@ -195,16 +195,16 @@ async def get_usuarios():
     conn = sqlite3.connect('usuarios.db')
     c = conn.cursor()
     c.execute('''
-        SELECT usuarioid, alias, contrasena, nombre, apellido, genero, edad, direccion, email, telefono, nivel, tipoJuego, fotoperfil, idtipousuario
+        SELECT usuarioId, alias, contrasena, nombre, apellido, genero, edad, direccion, email, telefono, nivel, tipoJuego, fotoPerfil, idTipoUsuario
         FROM usuarios
     ''')
     rows = c.fetchall()
     conn.close()
 
     usuarios = [Usuario(
-        usuarioid=row[0], alias=row[1], contrasena=row[2], nombre=row[3], apellido=row[4], genero=row[5], 
+        usuarioId=row[0], alias=row[1], contrasena=row[2], nombre=row[3], apellido=row[4], genero=row[5], 
         edad=row[6], direccion=row[7], email=row[8], telefono=row[9], nivel=row[10], 
-        tipoJuego=row[11], fotoperfil=row[12], idtipousuario=row[13]
+        tipoJuego=row[11], fotoPerfil=row[12], idTipoUsuario=row[13]
     ) for row in rows]
 
     return usuarios  
@@ -215,7 +215,7 @@ async def get_usuario(alias: str = Query(...), contrasena: str = Query(...)):
     conn = sqlite3.connect('usuarios.db')
     c = conn.cursor()
     c.execute('''
-        SELECT usuarioid, alias, contrasena, nombre, apellido, genero, edad, direccion, email, telefono, nivel, tipoJuego, fotoperfil, idtipousuario
+        SELECT usuarioId, alias, contrasena, nombre, apellido, genero, edad, direccion, email, telefono, nivel, tipoJuego, fotoPerfil, idTipoUsuario
         FROM usuarios WHERE alias = ? AND contrasena = ?
     ''', (alias, contrasena))
     row = c.fetchone()
@@ -225,7 +225,7 @@ async def get_usuario(alias: str = Query(...), contrasena: str = Query(...)):
         usuario = Usuario(
             usuarioid=row[0], alias=row[1], contrasena=row[2], nombre=row[3], apellido=row[4], genero=row[5],
             edad=row[6], direccion=row[7], email=row[8], telefono=row[9], 
-            nivel=row[10], tipoJuego=row[11], fotoperfil=row[12], idtipousuario=row[13]
+            nivel=row[10], tipoJuego=row[11], fotoPerfil=row[12], idTipoUsuario=row[13]
         )
         return usuario
     else:

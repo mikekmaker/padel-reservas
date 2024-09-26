@@ -1,18 +1,38 @@
 import sys
 import sqlite3
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query,  Depends, status
 from pydantic import BaseModel
-from typing import List,Optional
+from typing import List, Optional
 from fastapi.middleware.cors import CORSMiddleware
+#librerias de session
+from sqlalchemy.orm import Session
+from fastapi.security import OAuth2AuthorizationCodeBearer, OAuth2PasswordRequestForm
+from jose import JWSError, jwt 
+from datetime import datetime, timedelta
+from passlib.context import CryptContext
+#from database import SessionLocal, engine
+#from models import User
 
-version = f"{sys.version_info.major}.{sys.version_info.minor}"
+#configuracion para session de usuarios
+#base de datos
+dbJwt ="session.db"
+#outh2 scheme
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+#fin configuracion para session de usuarios
+
+db ="dbReservas.db"
+
+version = "{sys.version_info.major}.{sys.version_info.minor}"
 
 app = FastAPI()
+
+origins = ["http://localhost:3000","https://padel-app-odwu.onrender.com"]
 
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000","https://padel-reservas.onrender.com/"],  # Origins allowed to access the backend
+    allow_origins= origins,  # Origins allowed to access the backend
     allow_credentials=True,
     allow_methods=["*"],  # Allow all HTTP methods
     allow_headers=["*"],  # Allow all headers
@@ -21,7 +41,7 @@ app.add_middleware(
 
 @app.get("/")
 async def read_root():
-    message = f"Hello world! From FastAPI running on Uvicorn with Gunicorn. Using Python {version}"
+    message = "Hello world! From FastAPI running on Uvicorn with Gunicorn. Using Python {version}"
     return {"message": message}
 
 
@@ -31,11 +51,22 @@ class Recordatorio(BaseModel):
     descripcion: str
     fecha: str
     hora: str
+    
+# Definir el modelo de datos para la reserva
+class Reserva(BaseModel):
+    cancha_id: int
+    usuario_id: int
+    horario_id: int
+    descripcion: str
+    num_personas: int
+
 
 # Conectar a la base de datos y crear la tabla si no existe
 def init_db():
-    conn = sqlite3.connect('recordatorios.db')
-    c = conn.cursor()
+    conn = sqlite3.connect(db)
+    c = conn.cursor() 
+    
+    #creacion tabla recordatorios
     c.execute('''
               CREATE TABLE IF NOT EXISTS recordatorios
               (id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -44,39 +75,8 @@ def init_db():
               fecha DATE,
               hora TIME)
               ''')
-    conn.commit()
-    conn.close()
-
-init_db()
-
-# Ruta para crear un nuevo recordatorio (Alta)
-@app.post("/recordatorio")
-def create_recordatorio(recordatorio: Recordatorio):
-    conn = sqlite3.connect('recordatorios.db')
-    c = conn.cursor()
-    c.execute("INSERT INTO recordatorios (titulo, descripcion, fecha, hora) VALUES (?, ?, ?, ?)",
-              (recordatorio.titulo, recordatorio.descripcion, recordatorio.fecha, recordatorio.hora))
-    conn.commit()
-    conn.close()
-
-    return {"message": "Recordatorio creado con \u00e9xito"}
-
-# Ruta para obtener la lista de recordatorios
-@app.get("/recordatorios", response_model=List[Recordatorio])
-async def get_recordatorios():
-    conn = sqlite3.connect('recordatorios.db')
-    c = conn.cursor()
-    c.execute("SELECT id, titulo, descripcion, fecha, hora FROM recordatorios")
-    rows = c.fetchall()
-    conn.close()
-
-    recordatorios = [Recordatorio(id=row[0],titulo=row[1], descripcion=row[2], fecha=row[3], hora=row[4]) for row in rows]
-    return recordatorios
-
-# Conectar a la base de datos y crear la tabla si no existe
-def init_db():
-    conn = sqlite3.connect('reservas.db')
-    c = conn.cursor()
+    
+    #creacion tabla reservas
     c.execute('''
               CREATE TABLE IF NOT EXISTS reservas
               (reserva_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -91,18 +91,35 @@ def init_db():
 
 init_db()
 
-# Definir el modelo de datos para la reserva
-class Reserva(BaseModel):
-    cancha_id: int
-    usuario_id: int
-    horario_id: str  # Se usa str para manejar fechas y horas en formato ISO
-    descripcion: str
-    num_personas: int
+# Ruta para crear un nuevo recordatorio (Alta)
+@app.post("/recordatorio")
+def create_recordatorio(recordatorio: Recordatorio):
+    conn = sqlite3.connect(db)
+    c = conn.cursor()
+    c.execute("INSERT INTO recordatorios (titulo, descripcion, fecha, hora) VALUES (?, ?, ?, ?)",
+              (recordatorio.titulo, recordatorio.descripcion, recordatorio.fecha, recordatorio.hora))
+    conn.commit()
+    conn.close()
+
+    return {"message": "Recordatorio creado con \u00e9xito"}
+
+# Ruta para obtener la lista de recordatorios
+@app.get("/recordatorios", response_model=List[Recordatorio])
+async def get_recordatorios():
+    conn = sqlite3.connect(db)
+    c = conn.cursor()
+    c.execute("SELECT id, titulo, descripcion, fecha, hora FROM recordatorios")
+    rows = c.fetchall()
+    conn.close()
+
+    recordatorios = [Recordatorio(id=row[0],titulo=row[1], descripcion=row[2], fecha=row[3], hora=row[4]) for row in rows]
+    return recordatorios
+
 
 # Ruta para crear una nueva reserva
 @app.post('/reserva')
 async def create_reserva(reserva: Reserva):
-    conn = sqlite3.connect('reservas.db')
+    conn = sqlite3.connect(db)
     c = conn.cursor()
     c.execute("INSERT INTO reservas (cancha_id, usuario_id, horario_id, descripcion, num_personas) VALUES (?, ?, ?, ?, ?)",
               (reserva.cancha_id, reserva.usuario_id, reserva.horario_id, reserva.descripcion, reserva.num_personas))
@@ -114,7 +131,7 @@ async def create_reserva(reserva: Reserva):
 # Ruta para obtener la lista de reservas
 @app.get('/reservas', response_model=list[Reserva])
 async def get_reservas():
-    conn = sqlite3.connect('reservas.db')
+    conn = sqlite3.connect(db)
     c = conn.cursor()
     c.execute("SELECT cancha_id, usuario_id, horario_id, descripcion, num_personas FROM reservas")
     reservas = c.fetchall()
@@ -128,108 +145,98 @@ async def get_reservas():
     
     return reservas_list
 
-# Database model for the Usuario
-class Usuario(BaseModel):
-    usuarioId: int
-    alias: str
-    contrasena: str
-    nombre: str
-    apellido: str
-    genero: str
-    edad: str
-    direccion: str
-    email: str
-    telefono: str
-    nivel: str
-    tipoJuego: str
-    fotoPerfil: Optional[str]  # Assuming a base64 string
-    idTipoUsuario: int
-
-# Conectar a la base de datos y crear la tabla si no existe
-def init_db():
-    conn = sqlite3.connect('usuarios.db')
+# Ruta para modificar un recordatorio existente
+@app.put("/recordatorio/{id}")
+def update_recordatorio(id: int, recordatorio: Recordatorio):
+    conn = sqlite3.connect(db)
     c = conn.cursor()
-    c.execute('''
-              CREATE TABLE IF NOT EXISTS usuarios
-              (usuarioid INTEGER PRIMARY KEY AUTOINCREMENT,
-              alias TEXT,
-              contrasena TEXT,
-              nombre TEXT,
-              apellido TEXT,
-              genero TEXT,
-              edad TEXT,
-              direccion TEXT,
-              email TEXT,
-              telefono TEXT,
-              nivel TEXT,
-              tipoJuego TEXT,
-              fotoPerfil TEXT,
-              idTipoUsuario INTEGER)
-              ''')
-    conn.commit()
-    conn.close()
 
-init_db()
+    # Verificar si el recordatorio existe
+    c.execute("SELECT * FROM recordatorios WHERE id = ?", (id,))
+    existing_recordatorio = c.fetchone()
 
-@app.post("/usuario")
-async def create_usuario(usuario: Usuario):
-    conn = sqlite3.connect('usuarios.db')
-    c = conn.cursor()
-    c.execute("""
-        INSERT INTO usuarios 
-        (alias, contrasena, nombre, apellido, genero, edad, direccion, email, telefono, nivel, tipoJuego, fotoPerfil, idTipoUsuario) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (usuario.alias, usuario.contrasena, usuario.nombre, usuario.apellido, usuario.genero, usuario.edad,
-         usuario.direccion, usuario.email, usuario.telefono, usuario.nivel, usuario.tipoJuego, 
-         usuario.fotoPerfil, usuario.idTipoUsuario)
-    )
-    conn.commit()
-    conn.close()
-    
-    return {"message": "Usuario creado con \u00e9xito"}
+    if existing_recordatorio:
+        # Actualizar el recordatorio
+        c.execute('''
+                  UPDATE recordatorios
+                  SET titulo = ?, descripcion = ?, fecha = ?, hora = ?
+                  WHERE id = ?
+                  ''', (recordatorio.titulo, recordatorio.descripcion, recordatorio.fecha, recordatorio.hora, id))
+        conn.commit()
+        conn.close()
 
-# Endpoint to retrieve all usuarios
-@app.get("/usuarios", response_model=List[Usuario])
-async def get_usuarios():
-    conn = sqlite3.connect('usuarios.db')
-    c = conn.cursor()
-    c.execute('''
-        SELECT usuarioId, alias, contrasena, nombre, apellido, genero, edad, direccion, email, telefono, nivel, tipoJuego, fotoPerfil, idTipoUsuario
-        FROM usuarios
-    ''')
-    rows = c.fetchall()
-    conn.close()
-
-    usuarios = [Usuario(
-        usuarioId=row[0], alias=row[1], contrasena=row[2], nombre=row[3], apellido=row[4], genero=row[5], 
-        edad=row[6], direccion=row[7], email=row[8], telefono=row[9], nivel=row[10], 
-        tipoJuego=row[11], fotoPerfil=row[12], idTipoUsuario=row[13]
-    ) for row in rows]
-
-    return usuarios  
-
-# Endpoint to retrieve a usuario by alias and contrasena
-@app.get("/usuario", response_model=Usuario)
-async def get_usuario(alias: str = Query(...), contrasena: str = Query(...)):
-    conn = sqlite3.connect('usuarios.db')
-    c = conn.cursor()
-    c.execute('''
-        SELECT usuarioId, alias, contrasena, nombre, apellido, genero, edad, direccion, email, telefono, nivel, tipoJuego, fotoPerfil, idTipoUsuario
-        FROM usuarios WHERE alias = ? AND contrasena = ?
-    ''', (alias, contrasena))
-    row = c.fetchone()
-    conn.close()
-
-    if row:
-        usuario = Usuario(
-            usuarioid=row[0], alias=row[1], contrasena=row[2], nombre=row[3], apellido=row[4], genero=row[5],
-            edad=row[6], direccion=row[7], email=row[8], telefono=row[9], 
-            nivel=row[10], tipoJuego=row[11], fotoPerfil=row[12], idTipoUsuario=row[13]
-        )
-        return usuario
+        return {"message": "Recordatorio actualizado con éxito"}
     else:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        conn.close()
+        raise HTTPException(status_code=404, detail="Recordatorio no encontrado")
+
+# Ruta para modificar una reserva existente
+@app.put("/reserva/{reserva_id}")
+def update_reserva(reserva_id: int, reserva: Reserva):
+    conn = sqlite3.connect(db)
+    c = conn.cursor()
+
+    # Verificar si la reserva existe
+    c.execute("SELECT * FROM reservas WHERE reserva_id = ?", (reserva_id,))
+    existing_reserva = c.fetchone()
+
+    if existing_reserva:
+        # Actualizar la reserva
+        c.execute('''
+                  UPDATE reservas
+                  SET cancha_id = ?, usuario_id = ?, horario_id = ?, descripcion = ?, num_personas = ?
+                  WHERE reserva_id = ?
+                  ''', (reserva.cancha_id, reserva.usuario_id, reserva.horario_id, reserva.descripcion, reserva.num_personas, reserva_id))
+        conn.commit()
+        conn.close()
+
+        return {"message": "Reserva actualizada con éxito"}
+    else:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Reserva no encontrada")
+    
+    # Ruta para eliminar un recordatorio por ID
+@app.delete("/recordatorio/{id}")
+def delete_recordatorio(id: int):
+    conn = sqlite3.connect(db)
+    c = conn.cursor()
+
+    # Verificar si el recordatorio existe
+    c.execute("SELECT * FROM recordatorios WHERE id = ?", (id,))
+    existing_recordatorio = c.fetchone()
+
+    if existing_recordatorio:
+        # Eliminar el recordatorio
+        c.execute("DELETE FROM recordatorios WHERE id = ?", (id,))
+        conn.commit()
+        conn.close()
+
+        return {"message": "Recordatorio eliminado con éxito"}
+    else:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Recordatorio no encontrado")
+
+# Ruta para eliminar una reserva por ID
+@app.delete("/reserva/{reserva_id}")
+def delete_reserva(reserva_id: int):
+    conn = sqlite3.connect(db)
+    c = conn.cursor()
+
+    # Verificar si la reserva existe
+    c.execute("SELECT * FROM reservas WHERE reserva_id = ?", (reserva_id,))
+    existing_reserva = c.fetchone()
+
+    if existing_reserva:
+        # Eliminar la reserva
+        c.execute("DELETE FROM reservas WHERE reserva_id = ?", (reserva_id,))
+        conn.commit()
+        conn.close()
+
+        return {"message": "Reserva eliminada con éxito"}
+    else:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Reserva no encontrada")
+
 
 if __name__ == '__main__':
     import uvicorn

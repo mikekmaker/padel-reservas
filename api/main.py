@@ -17,7 +17,7 @@ from passlib.context import CryptContext
 #base de datos
 dbJwt ="session.db"
 #outh2 scheme
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+#oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 #fin configuracion para session de usuarios
 

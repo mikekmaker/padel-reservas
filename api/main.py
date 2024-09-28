@@ -27,8 +27,8 @@ version = "{sys.version_info.major}.{sys.version_info.minor}"
 
 app = FastAPI()
 
-origins = ["http://localhost:3000","https://padel-app-odwu.onrender.com"]
-
+#origins = ["http://localhost:3000","https://padel-app-odwu.onrender.com,*"]
+origins = ["*"]
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,

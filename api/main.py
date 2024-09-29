@@ -12,6 +12,10 @@ from datetime import datetime, timedelta
 from passlib.context import CryptContext
 #from database import SessionLocal, engine
 #from models import User
+#librerias acceso a api externa
+import httpx
+from fastapi.responses import JSONResponse
+
 
 #configuracion para session de usuarios
 #base de datos
@@ -236,6 +240,100 @@ def delete_reserva(reserva_id: int):
     else:
         conn.close()
         raise HTTPException(status_code=404, detail="Reserva no encontrada")
+    
+
+#llamada a api externa
+# Replace these with actual URLs for the external services
+HORARIOS_API_URL = "https://e114-181-171-103-188.ngrok-free.app/api/horarios"
+CANCHAS_API_URL = "https://e114-181-171-103-188.ngrok-free.app/api/canchas"
+USUARIOS_API_URL = "https://e114-181-171-103-188.ngrok-free.app/api/usuarios"
+
+@app.get("/horariosreservas")
+async def get_horario_reserva():
+    async with httpx.AsyncClient() as client:
+        # Fetching the external data
+        #horarios_response = await client.get(HORARIOS_API_URL)
+        #canchas_response = await client.get(CANCHAS_API_URL)
+        
+        #mock canchas and horarios
+        horarios = [
+            {"horario_id": 1, "fecha": "2024-09-23", "hora": "10:00"},
+            {"horario_id": 2, "fecha": "2024-09-28", "hora": "12:00"},
+            {"horario_id": 3, "fecha": "2024-09-30", "hora": "14:00"},
+            {"horario_id": 4, "fecha": "2024-10-01", "hora": "16:00"},
+            {"horario_id": 5, "fecha": "2024-10-04", "hora": "18:00"},
+            {"horario_id": 6, "fecha": "2024-10-06", "hora": "20:00"},
+            {"horario_id": 7, "fecha": "2024-10-09", "hora": "22:00"},
+            {"horario_id": 8, "fecha": "2024-10-12", "hora": "10:00"},
+        ]
+
+        canchas = [
+            {"cancha_id": 1, "nombre": "Cancha A", "ubicacion": "Location A"},
+            {"cancha_id": 2, "nombre": "Cancha B", "ubicacion": "Location B"},
+            {"cancha_id": 3, "nombre": "Cancha C", "ubicacion": "Location C"},
+        ]
+
+        
+        usuarios_response = await client.get(USUARIOS_API_URL)
+        
+        # Parsing JSON responses
+        #horarios = horarios_response.json()
+        #canchas = canchas_response.json()
+        if usuarios_response.status_code == 200:
+            usuarios = usuarios_response.json()
+        else:
+            print(f"Error: {usuarios_response.status_code}, {usuarios_response.text}")
+            usuarios = [{"id":1,"nivel":"intermedio","apellido":"Lopez","recontrasena":"ana2024!","edad":"22","alias":"aLopez","contrasena":"ana2024!","telefono":"5491123456","fotoPerfil":"perfil_ana.jpg","idTipoUsuario":4,"nombre":"Ana","tipoDeJuego":"Deportes","email":"ana.lopez@example.com","genero":"Femenino","direccion":"Paseo de los Olmos 100","remail":"ana.lopez@example.com"},
+                        {"id":2,"nivel":"intermedio","apellido":"Perez","recontrasena":"test","edad":"22","alias":"Pepe","contrasena":"test","telefono":"5411112233","fotoPerfil":"algo.jpg","idTipoUsuario":3,"nombre":"Juan","tipoDeJuego":"Drive","email":"juan.perez@example.com","genero":"Femenino","direccion":"Paseo de los Olmos 100","remail":"ana.lopez@example.com"}]
+        
+
+    # fetch reservas from the local DB
+    conn = sqlite3.connect(db)
+    c = conn.cursor()
+    c.execute("SELECT reserva_id, cancha_id, usuario_id, horario_id, descripcion, num_personas FROM reservas")
+    reservas = c.fetchall()
+    conn.close()
+    
+    # Convertir los resultados en una lista de diccionarios
+    reservas = [
+        {"reserva_id":row[0], "cancha_id": row[1], "usuario_id": row[2], "horario_id": row[3], "descripcion": row[4], "num_personas": row[5]}
+        for row in reservas
+    ]
+
+    # Map cancha_id and usuario_id to their details
+    cancha_map = {cancha['cancha_id']: cancha for cancha in canchas}
+    usuario_map = {usuario['id']: {'nombre': usuario['nombre'], 'apellido': usuario['apellido']} for usuario in usuarios}
+
+    # Combine the data
+    horarioreserva_array = []
+
+    for horario in horarios:
+        horarioreserva = {
+            "horario_id": horario['horario_id'],
+            "fecha": horario['fecha'],
+            "hora": horario['hora'],
+            "reserva": None
+        }
+
+        for reserva in reservas:
+            if reserva['horario_id'] == horario['horario_id']:
+                cancha = cancha_map.get(reserva['cancha_id'], {})
+                usuario = usuario_map.get(reserva['usuario_id'], {})
+
+                horarioreserva['reserva'] = {
+                    "reserva_id": reserva['reserva_id'],
+                    "descripcion": reserva['descripcion'],
+                    "num_personas": reserva['num_personas'],
+                    "cancha": cancha,  # Include cancha details
+                    "usuario": usuario  # Include user details
+                }
+                break  # Only one reserva per horario
+
+        horarioreserva_array.append(horarioreserva)
+
+    return JSONResponse(content=horarioreserva_array)
+
+
 
 
 if __name__ == '__main__':

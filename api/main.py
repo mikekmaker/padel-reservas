@@ -119,36 +119,6 @@ async def get_recordatorios():
     recordatorios = [Recordatorio(id=row[0],titulo=row[1], descripcion=row[2], fecha=row[3], hora=row[4]) for row in rows]
     return recordatorios
 
-
-# Ruta para crear una nueva reserva
-@app.post('/reserva')
-async def create_reserva(reserva: Reserva):
-    conn = sqlite3.connect(db)
-    c = conn.cursor()
-    c.execute("INSERT INTO reservas (cancha_id, usuario_id, horario_id, descripcion, num_personas) VALUES (?, ?, ?, ?, ?)",
-              (reserva.cancha_id, reserva.usuario_id, reserva.horario_id, reserva.descripcion, reserva.num_personas))
-    conn.commit()
-    conn.close()
-    
-    return {"message": "Reserva creada con \u00e9xito"}
-
-# Ruta para obtener la lista de reservas
-@app.get('/reservas', response_model=list[Reserva])
-async def get_reservas():
-    conn = sqlite3.connect(db)
-    c = conn.cursor()
-    c.execute("SELECT cancha_id, usuario_id, horario_id, descripcion, num_personas FROM reservas")
-    reservas = c.fetchall()
-    conn.close()
-    
-    # Convertir los resultados en una lista de diccionarios
-    reservas_list = [
-        {"cancha_id": row[0], "usuario_id": row[1], "horario_id": row[2], "descripcion": row[3], "num_personas": row[4]}
-        for row in reservas
-    ]
-    
-    return reservas_list
-
 # Ruta para modificar un recordatorio existente
 @app.put("/recordatorio/{id}")
 def update_recordatorio(id: int, recordatorio: Recordatorio):
@@ -174,6 +144,77 @@ def update_recordatorio(id: int, recordatorio: Recordatorio):
         conn.close()
         raise HTTPException(status_code=404, detail="Recordatorio no encontrado")
 
+# Ruta para eliminar un recordatorio por ID
+@app.delete("/recordatorio/{id}")
+def delete_recordatorio(id: int):
+    conn = sqlite3.connect(db)
+    c = conn.cursor()
+
+    # Verificar si el recordatorio existe
+    c.execute("SELECT * FROM recordatorios WHERE id = ?", (id,))
+    existing_recordatorio = c.fetchone()
+
+    if existing_recordatorio:
+        # Eliminar el recordatorio
+        c.execute("DELETE FROM recordatorios WHERE id = ?", (id,))
+        conn.commit()
+        conn.close()
+
+        return {"message": "Recordatorio eliminado con éxito"}
+    else:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Recordatorio no encontrado")
+
+# Ruta para crear una nueva reserva
+@app.post('/reserva')
+async def create_reserva(reserva: Reserva):
+    conn = sqlite3.connect(db)
+    c = conn.cursor()
+    c.execute("INSERT INTO reservas (cancha_id, usuario_id, horario_id, descripcion, num_personas) VALUES (?, ?, ?, ?, ?)",
+              (reserva.cancha_id, reserva.usuario_id, reserva.horario_id, reserva.descripcion, reserva.num_personas))
+    conn.commit()
+    conn.close()
+    
+    return {"message": "Reserva creada con \u00e9xito"}
+
+# Ruta para obtener una reserva por su ID
+@app.get('/reservas/{reserva_id}', response_model=Reserva)
+async def get_reserva(reserva_id: int):
+    conn = sqlite3.connect(db)
+    c = conn.cursor()
+    c.execute("SELECT reserva_id, cancha_id, usuario_id, horario_id, descripcion, num_personas FROM reservas WHERE reserva_id = ?", (reserva_id,))
+    reserva = c.fetchone()
+    conn.close()
+    
+    if reserva:
+        return {
+            "reserva_id": reserva[0],
+            "cancha_id": reserva[1],
+            "usuario_id": reserva[2],
+            "horario_id": reserva[3],
+            "descripcion": reserva[4],
+            "num_personas": reserva[5]
+        }
+    else:
+        raise HTTPException(status_code=404, detail="Reserva no encontrada")
+
+# Ruta para obtener la lista de reservas
+@app.get('/reservas', response_model=list[Reserva])
+async def get_reservas():
+    conn = sqlite3.connect(db)
+    c = conn.cursor()
+    c.execute("SELECT cancha_id, usuario_id, horario_id, descripcion, num_personas FROM reservas")
+    reservas = c.fetchall()
+    conn.close()
+    
+    # Convertir los resultados en una lista de diccionarios
+    reservas_list = [
+        {"cancha_id": row[0], "usuario_id": row[1], "horario_id": row[2], "descripcion": row[3], "num_personas": row[4]}
+        for row in reservas
+    ]
+    
+    return reservas_list
+
 # Ruta para modificar una reserva existente
 @app.put("/reserva/{reserva_id}")
 def update_reserva(reserva_id: int, reserva: Reserva):
@@ -198,27 +239,6 @@ def update_reserva(reserva_id: int, reserva: Reserva):
     else:
         conn.close()
         raise HTTPException(status_code=404, detail="Reserva no encontrada")
-    
-    # Ruta para eliminar un recordatorio por ID
-@app.delete("/recordatorio/{id}")
-def delete_recordatorio(id: int):
-    conn = sqlite3.connect(db)
-    c = conn.cursor()
-
-    # Verificar si el recordatorio existe
-    c.execute("SELECT * FROM recordatorios WHERE id = ?", (id,))
-    existing_recordatorio = c.fetchone()
-
-    if existing_recordatorio:
-        # Eliminar el recordatorio
-        c.execute("DELETE FROM recordatorios WHERE id = ?", (id,))
-        conn.commit()
-        conn.close()
-
-        return {"message": "Recordatorio eliminado con éxito"}
-    else:
-        conn.close()
-        raise HTTPException(status_code=404, detail="Recordatorio no encontrado")
 
 # Ruta para eliminar una reserva por ID
 @app.delete("/reserva/{reserva_id}")

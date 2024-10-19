@@ -441,7 +441,7 @@ def delete_reserva(reserva_id: int):
 # Replace these with actual URLs for the external services
 HORARIOS_API_URL = "https://e114-181-171-103-188.ngrok-free.app/api/horarios"
 CANCHAS_API_URL = "https://e114-181-171-103-188.ngrok-free.app/api/canchas"
-USUARIOS_API_URL = "https://3009-186-139-187-62.ngrok-free.app" #"http://host.docker.internal:8080/api/usuarios"
+USUARIOS_API_URL = "https://3009-186-139-187-62.ngrok-free.app/api/usuarios" #"https://3009-186-139-187-62.ngrok-free.app"
 
 @app.get("/horariosreservas")
 async def get_horario_reserva():

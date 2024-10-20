@@ -439,9 +439,9 @@ def delete_reserva(reserva_id: int):
 
 #llamada a api externa
 # Replace these with actual URLs for the external services
-HORARIOS_API_URL = "https://e114-181-171-103-188.ngrok-free.app/api/horarios"
-CANCHAS_API_URL = "https://e114-181-171-103-188.ngrok-free.app/api/canchas"
-USUARIOS_API_URL = "https://be1e-190-210-225-147.ngrok-free.app/api/usuarios"
+HORARIOS_API_URL = "https://2b34-2800-40-16-31e-f4ff-e9b1-1447-583d.ngrok-free.app/api/horarios"
+CANCHAS_API_URL = "https://2b34-2800-40-16-31e-f4ff-e9b1-1447-583d.ngrok-free.app/api/canchas"
+USUARIOS_API_URL = "https://2b34-2800-40-16-31e-f4ff-e9b1-1447-583d.ngrok-free.app/api/usuarios"
 
 @app.get("/horariosreservas")
 async def get_horario_reserva():

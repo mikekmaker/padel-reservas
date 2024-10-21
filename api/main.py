@@ -439,9 +439,10 @@ def delete_reserva(reserva_id: int):
 
 #llamada a api externa
 # Replace these with actual URLs for the external services
-HORARIOS_API_URL = "https://2b34-2800-40-16-31e-f4ff-e9b1-1447-583d.ngrok-free.app/api/horarios"
-CANCHAS_API_URL = "https://2b34-2800-40-16-31e-f4ff-e9b1-1447-583d.ngrok-free.app/api/canchas"
-USUARIOS_API_URL = "https://2b34-2800-40-16-31e-f4ff-e9b1-1447-583d.ngrok-free.app/api/usuarios"
+PREFIX = "https://2b34-2800-40-16-31e-f4ff-e9b1-1447-583d.ngrok-free.app"
+HORARIOS_API_URL = "/api/horarios"
+CANCHAS_API_URL = "/api/canchas"
+USUARIOS_API_URL = "/api/usuarios"
 
 @app.get("/horariosreservas")
 async def get_horario_reserva():
@@ -451,40 +452,32 @@ async def get_horario_reserva():
     }
     async with httpx.AsyncClient() as client:
         # Fetching the external data
-        #horarios_response = await client.get(HORARIOS_API_URL)
-        #canchas_response = await client.get(CANCHAS_API_URL)
+        full_route = "{}{}".format(PREFIX, HORARIOS_API_URL)
+        print(full_route)
+        horarios_response = await client.get(full_route)
+        if horarios_response.status_code == 200:
+            horarios = horarios_response.json()
+        else:
+            print("Error: {horarios_response.status_code}")
+            raise HTTPException(status_code=404)
         
-        #mock canchas and horarios
-        horarios = [
-            {"horario_id": 1, "fecha": "2024-09-23", "hora": "10:00"},
-            {"horario_id": 2, "fecha": "2024-09-28", "hora": "12:00"},
-            {"horario_id": 3, "fecha": "2024-09-30", "hora": "14:00"},
-            {"horario_id": 4, "fecha": "2024-10-01", "hora": "16:00"},
-            {"horario_id": 5, "fecha": "2024-10-04", "hora": "18:00"},
-            {"horario_id": 6, "fecha": "2024-10-06", "hora": "20:00"},
-            {"horario_id": 7, "fecha": "2024-10-09", "hora": "22:00"},
-            {"horario_id": 8, "fecha": "2024-10-12", "hora": "10:00"},
-        ]
-
-        canchas = [
-            {"cancha_id": 1, "nombre": "Cancha A", "ubicacion": "Location A"},
-            {"cancha_id": 2, "nombre": "Cancha B", "ubicacion": "Location B"},
-            {"cancha_id": 3, "nombre": "Cancha C", "ubicacion": "Location C"},
-        ]
-
+        full_route = "{}{}".format(PREFIX, CANCHAS_API_URL)
+        print(full_route)
+        canchas_response = await client.get(full_route)
+        if canchas_response.status_code == 200:
+            canchas = canchas_response.json()
+        else:
+            print("Error: {canchas_response.status_code}")
+            raise HTTPException(status_code=404)
         
-        usuarios_response = await client.get(USUARIOS_API_URL, headers=headers)
-        
-        # Parsing JSON responses
-        #horarios = horarios_response.json()
-        #canchas = canchas_response.json()
+        full_route = "{}{}".format(PREFIX, USUARIOS_API_URL)
+        print(full_route)      
+        usuarios_response = await client.get(full_route, headers=headers)
         if usuarios_response.status_code == 200:
             usuarios = usuarios_response.json()
         else:
-            print(f"Error: {usuarios_response.status_code}, {usuarios_response.text}")
-            usuarios = [{"id":1,"nivel":"intermedio","apellido":"Lopez","recontrasena":"ana2024!","edad":"22","alias":"aLopez","contrasena":"ana2024!","telefono":"5491123456","fotoPerfil":"perfil_ana.jpg","idTipoUsuario":4,"nombre":"Ana","tipoDeJuego":"Deportes","email":"ana.lopez@example.com","genero":"Femenino","direccion":"Paseo de los Olmos 100","remail":"ana.lopez@example.com"},
-                        {"id":2,"nivel":"intermedio","apellido":"Perez","recontrasena":"test","edad":"22","alias":"Pepe","contrasena":"test","telefono":"5411112233","fotoPerfil":"algo.jpg","idTipoUsuario":3,"nombre":"Juan","tipoDeJuego":"Drive","email":"juan.perez@example.com","genero":"Femenino","direccion":"Paseo de los Olmos 100","remail":"ana.lopez@example.com"}]
-        
+            print("Error: {usuarios_response.status_code}")
+            raise HTTPException(status_code=404)
 
     # fetch reservas from the local DB
     conn = sqlite3.connect(db)

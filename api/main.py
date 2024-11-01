@@ -1,6 +1,6 @@
 import sys
 import sqlite3
-from fastapi import FastAPI, HTTPException, Query,  Depends, status
+from fastapi import FastAPI, HTTPException, Query,  Depends, status, Response
 from pydantic import BaseModel, Field, conint, validator, ValidationError
 from typing import ClassVar, List, Optional
 from fastapi.middleware.cors import CORSMiddleware
@@ -115,34 +115,46 @@ init_db()
 
 # Ruta para crear un nuevo recordatorio (Alta)
 @app.post("/recordatorio",status_code=status.HTTP_201_CREATED)
-def create_recordatorio(recordatorio: Recordatorio):
-    # Variable para almacenar el mensaje de error
-    detalleError = ""
+def create_recordatorio(recordatorio: Recordatorio,response:Response):
+       
+                     
     
     # Validar que 'titulo' no este vacio
     if not recordatorio.titulo.strip():
-        detalleError = "El campo 'titulo' no puede estar vacio."
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return {
+            "detail":"titulo",
+            "msg": "El campo 'titulo' no puede estar vacio."
+        }      
     
     # Validar que 'descripcion' no este vacia
     elif not recordatorio.descripcion.strip():
-        detalleError = "El campo 'descripcion' no puede estar vacio."
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return {
+            "detail":"descripcion",
+            "msg": "El campo 'descripcion' no puede estar vacio."
+        }      
     
     # Validar que 'fecha' no este vacio
     elif not recordatorio.fecha.strip():
-        detalleError = "El campo 'fecha' no puede estar vacio."
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return {
+            "detail":"fecha",
+            "msg": "El campo 'fecha' no puede estar vacio."
+        }      
     
     # Validar que 'hora' no este vacio
     elif not recordatorio.hora.strip():
-        detalleError = "El campo 'hora' no puede estar vacio."
+        response.status_code = status.HTTP_400_BAD_REQUEST
 
-    # Si hay un error, se retorna un mensaje con un status code 400
-    if detalleError:
+                                                                   
+                    
         return {
-            "recordatorio": None,
-            "status_code": 400,
-            "detalleError": detalleError
-        }
-    
+            "detail":"hora",
+            "msg": "El campo 'hora' no puede estar vacio."
+                                        
+        }      
+     
     # Si las validaciones son correctas, se inserta el recordatorio en la base de datos
     conn = sqlite3.connect(db)
     c = conn.cursor()
@@ -187,13 +199,13 @@ async def get_recordatorios():
         status_code=status.HTTP_200_OK
     )
 # Ruta para modificar un recordatorio existente
-@app.put("/recordatorio/{id}")
-def update_recordatorio(id: int, recordatorio: Recordatorio):
+@app.put("/recordatorio/{id}",status_code=status.HTTP_200_OK)
+def update_recordatorio(id: int, recordatorio: Recordatorio,response:Response):
     conn = sqlite3.connect(db)
     c = conn.cursor()
 
-    # Inicializamos el detalleError
-    detalleError = ""
+                                   
+                     
 
     # Verificar si el recordatorio existe
     c.execute("SELECT * FROM recordatorios WHERE id = ?", (id,))
@@ -202,18 +214,34 @@ def update_recordatorio(id: int, recordatorio: Recordatorio):
     if existing_recordatorio:
         # Validaciones antes de actualizar
         if not recordatorio.titulo.strip():
-            detalleError = "El campo 'titulo' no puede estar vacio."
+            response.status_code = status.HTTP_400_BAD_REQUEST
+            return {
+            "detail":"titulo",
+            "msg": "El campo 'titulo' no puede estar vacio."
+        }   
         elif not recordatorio.descripcion.strip():
-            detalleError = "El campo 'descripcion' no puede estar vacio."
+            response.status_code = status.HTTP_400_BAD_REQUEST
+            return {
+            "detail":"descripcion",
+            "msg": "El campo 'descripcion' no puede estar vacio."
+        }   
         elif not recordatorio.fecha.strip():
-            detalleError = "El campo 'fecha' no puede estar vacio."
+            response.status_code = status.HTTP_400_BAD_REQUEST
+            return {
+            "detail":"fecha",
+            "msg": "El campo 'fecha' no puede estar vacio."
+        }   
         elif not recordatorio.hora.strip():
-            detalleError = "El campo 'hora' no puede estar vacio."
+            response.status_code = status.HTTP_400_BAD_REQUEST
+            return {
+            "detail":"hora",
+            "msg": "El campo 'hora' no puede estar vacio."
+        }   
         
-        # Si hay errores, devolver un error 400
-        if detalleError:
-            conn.close()
-            raise HTTPException(status_code=400, detail=detalleError)
+                                               
+                        
+                        
+                                                                     
 
         # Actualizar el recordatorio
         c.execute('''
@@ -240,7 +268,7 @@ def update_recordatorio(id: int, recordatorio: Recordatorio):
         raise HTTPException(status_code=404, detail="Recordatorio no encontrado")
 
 # Ruta para eliminar un recordatorio por ID
-@app.delete("/recordatorio/{id}")
+@app.delete("/recordatorio/{id}",status_code=status.HTTP_200_OK)
 def delete_recordatorio(id: int):
     conn = sqlite3.connect(db)
     c = conn.cursor()
@@ -272,36 +300,49 @@ def delete_recordatorio(id: int):
         raise HTTPException(status_code=404, detail="Recordatorio no encontrado")
 
 # Ruta para crear una nueva reserva 
-   
+@app.post('/reserva',status_code=status.HTTP_201_CREATED)
 
-@app.post('/reserva')
-async def create_reserva(reserva: Reserva):
-    # Variable para almacenar el mensaje de error
-    detalleError = ""
+                     
+async def create_reserva(reserva: Reserva, response:Response):
+                                                 
+                     
     
     # Validar que cancha_id sea un entero mayor a 0
     if not isinstance(reserva.cancha_id, int) or reserva.cancha_id <= 0:
-        detalleError = "Debe seleccionar una cancha"
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return {
+            "detail":"cancha",
+            "msg": "debe seleccionar una cancha valida"
+        }      
+        
     
     # Validar que horario_id sea un entero mayor a 0
     elif not isinstance(reserva.horario_id, int) or reserva.horario_id <= 0:
-        detalleError = "Debe seleccionar el horario"
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return {
+            "detail":"horario",
+            "msg": "debe seleccionar un horario valido"
+        }      
     
     # Validar que descripcion no este vacia
     elif not reserva.descripcion.strip():  # Validamos que descripcion no este vacia
-        detalleError = "Debe ingresar una descripcion de su reserva"
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return {
+            "detail":"descripcion",
+            "msg": "el campo 'descripcion' no debe estar vacio"
+        }      
     
     # Validar que num_personas sea un entero mayor a 0
     elif not isinstance(reserva.num_personas, int) or reserva.num_personas <= 0:
-        detalleError = "Debe haber al menos 1 jugador"
+        response.status_code = status.HTTP_400_BAD_REQUEST
     
-    # Si hay un error, se retorna un mensaje con un status code 400
-    if detalleError:
+                                                                   
+                    
         return {
-            "reserva": None,
-            "status_code": 400,
-            "detalleError": detalleError
-        }
+            "detail":"jugadores",
+            "msg": "debe haber al menos 1 jugador"
+                                        
+        } 
     
     # Si las validaciones son correctas, insertamos en la base de datos
     conn = sqlite3.connect(db)
@@ -325,7 +366,7 @@ async def create_reserva(reserva: Reserva):
 
 # Ruta para obtener una reserva por su ID
 
-@app.get('/reserva/{reserva_id}')
+@app.get('/reserva/{reserva_id}',status_code=status.HTTP_200_OK)
 async def get_reserva(reserva_id: int):
     conn = sqlite3.connect(db)
     c = conn.cursor()
@@ -338,35 +379,35 @@ async def get_reserva(reserva_id: int):
 
     if reserva:
         return {
-            "message": "Reserva encontrada con exito",
-            "reserva": {
+                                                      
+                        
                 "id": reserva[0],  # reserva_id
                 "cancha_id": reserva[1],
                 "usuario_id": reserva[2],
                 "horario_id": reserva[3],
                 "descripcion": reserva[4],
-                "num_personas": reserva[5]
-            },
-            "status_code": 200,
-            "detalleError": ""
+                "num_personas": reserva[5],
+              
+                               
+                              
         }
     else:
         raise HTTPException(status_code=404, detail="Reserva no encontrada")
 
     
 # Ruta para obtener la lista de reservas
-@app.get("/reservas")
+@app.get("/reservas",status_code=status.HTTP_200_OK)
 async def get_reservas():
     conn = sqlite3.connect(db)
     c = conn.cursor()
     
 	# Ejecutar la consulta para obtener todas las reservas
-    c.execute("SELECT cancha_id, usuario_id, horario_id, descripcion, num_personas FROM reservas")
+    c.execute("SELECT reserva_id, cancha_id, usuario_id, horario_id, descripcion, num_personas FROM reservas")
     rows = c.fetchall()
     conn.close()
 
     # Crear una lista de diccionarios con los datos de cada reserva
-    reservas_list = [{"cancha_id": row[0],"usuario_id": row[1],"horario_id": row[2],"descripcion": row[3],"num_personas": row[4]} for row in rows]
+    reservas_list = [{"reserva_id": row[0], "cancha_id": row[1],"usuario_id": row[2],"horario_id": row[3],"descripcion": row[4],"num_personas": row[5]} for row in rows]
     
 	 # Devolver la lista de recordatorios con un codigo de estado 200 y estructura personalizada
     return JSONResponse(
@@ -375,14 +416,48 @@ async def get_reservas():
     )
    
 # Ruta para modificar una reserva existente
-@app.put("/reserva/{reserva_id}")
-def update_reserva(reserva_id: int, reserva: Reserva):
+@app.put("/reserva/{reserva_id}",status_code=status.HTTP_200_OK)
+def update_reserva(reserva_id: int, reserva: Reserva,response:Response):
     conn = sqlite3.connect(db)
     c = conn.cursor()
 
     # Verificar si la reserva existe
     c.execute("SELECT * FROM reservas WHERE reserva_id = ?", (reserva_id,))
     existing_reserva = c.fetchone()
+    
+    if existing_reserva:
+    # Validar que cancha_id sea un entero mayor a 0
+        if not isinstance(reserva.cancha_id, int) or reserva.cancha_id <= 0:
+            response.status_code = status.HTTP_400_BAD_REQUEST
+            return {
+            "detail":"cancha",
+            "msg": "debe seleccionar una cancha valida"
+        }      
+        
+    
+    # Validar que horario_id sea un entero mayor a 0
+        elif not isinstance(reserva.horario_id, int) or reserva.horario_id <= 0:
+            response.status_code = status.HTTP_400_BAD_REQUEST
+            return {
+            "detail":"horario",
+            "msg": "debe seleccionar un horario valido"
+        }      
+    
+    # Validar que descripcion no este vacia
+        elif not reserva.descripcion.strip():  # Validamos que descripcion no este vacia
+            response.status_code = status.HTTP_400_BAD_REQUEST
+            return {
+            "detail":"descripcion",
+            "msg": "el campo 'descripcion' no debe estar vacio"
+        }      
+    
+    # Validar que num_personas sea un entero mayor a 0
+        elif not isinstance(reserva.num_personas, int) or reserva.num_personas <= 0:
+            response.status_code = status.HTTP_400_BAD_REQUEST
+            return {
+            "detail":"jugadores",
+            "msg": "debe haber al menos 1 jugador"
+        } 
 
     if existing_reserva:
         # Actualizar la reserva
@@ -409,7 +484,7 @@ def update_reserva(reserva_id: int, reserva: Reserva):
         raise HTTPException(status_code=404, detail="Reserva no encontrada")
 
 # Ruta para eliminar una reserva por ID
-@app.delete("/reserva/{reserva_id}")
+@app.delete("/reserva/{reserva_id}",status_code=status.HTTP_200_OK)
 def delete_reserva(reserva_id: int):
     conn = sqlite3.connect(db)
     c = conn.cursor()
@@ -423,7 +498,7 @@ def delete_reserva(reserva_id: int):
         c.execute("DELETE FROM reservas WHERE reserva_id = ?", (reserva_id,))
         conn.commit()
         conn.close()
-  # Crear la respuesta con los detalles de la reserva eliminad
+  # Crear la respuesta con los detalles de la reserva eliminada
         return {     
             "reserva_id": reserva_id,
             "cancha_id": existing_reserva[1],
@@ -469,15 +544,29 @@ async def get_horario_reserva():
         else:
             print("Error: {canchas_response.status_code}")
             raise HTTPException(status_code=404)
+                                                                      
+                                                                      
+         
+
+                   
+                                                                              
+                                                                              
+                                                                              
+         
+
         
         full_route = "{}{}".format(PREFIX, USUARIOS_API_URL)
         print(full_route)      
         usuarios_response = await client.get(full_route, headers=headers)
+                                            
+                                          
         if usuarios_response.status_code == 200:
             usuarios = usuarios_response.json()
         else:
             print("Error: {usuarios_response.status_code}")
             raise HTTPException(status_code=404)
+                                                                                                                                                                                                                                                                                                                                                                                 
+        
 
     # fetch reservas from the local DB
     conn = sqlite3.connect(db)

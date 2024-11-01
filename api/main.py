@@ -410,10 +410,7 @@ async def get_reservas():
     reservas_list = [{"reserva_id": row[0], "cancha_id": row[1],"usuario_id": row[2],"horario_id": row[3],"descripcion": row[4],"num_personas": row[5]} for row in rows]
     
 	 # Devolver la lista de recordatorios con un codigo de estado 200 y estructura personalizada
-    return JSONResponse(
-        reservas_list,
-        status_code=status.HTTP_200_OK
-    )
+    return JSONResponse(reservas_list)
    
 # Ruta para modificar una reserva existente
 @app.put("/reserva/{reserva_id}",status_code=status.HTTP_200_OK)
@@ -513,7 +510,6 @@ def delete_reserva(reserva_id: int):
     
 
 #llamada a api externa
-# Replace these with actual URLs for the external services
 PREFIX = "https://3367-190-210-32-247.ngrok-free.app"
 HORARIOS_API_URL = "/api/horarios"
 CANCHAS_API_URL = "/api/canchas"

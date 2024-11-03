@@ -532,7 +532,7 @@ CANCHAS_API_URL = "/api/canchas"
 USUARIOS_API_URL = "/api/usuarios"
 
 @app.get("/horariosreservas")
-async def get_horario_reserva():
+async def get_horario_reserva(horario_id: int = Query(None, description="ID de horario a filtrar")):
     headers = {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
@@ -556,16 +556,6 @@ async def get_horario_reserva():
         else:
             print("Error: {canchas_response.status_code}")
             raise HTTPException(status_code=404)
-                                                                      
-                                                                      
-         
-
-                   
-                                                                              
-                                                                              
-                                                                              
-         
-
         
         full_route = "{}{}".format(PREFIX, USUARIOS_API_URL)
         print(full_route)      
@@ -601,6 +591,10 @@ async def get_horario_reserva():
     horarioreserva_array = []
 
     for horario in horarios:
+        
+        if horario_id is not None and horario['horario_id'] != horario_id:
+            continue
+        
         horarioreserva = {
             "horario_id": horario['horario_id'],
             "fecha": horario['fecha'],
@@ -623,6 +617,9 @@ async def get_horario_reserva():
                 break  # Only one reserva per horario
 
         horarioreserva_array.append(horarioreserva)
+        
+    if horario_id is not None and not horarioreserva_array:
+        raise HTTPException(status_code=404, detail="Horario no encontrado")
 
     return JSONResponse(content=horarioreserva_array)
 

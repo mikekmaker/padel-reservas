@@ -313,6 +313,14 @@ async def create_reserva(reserva: Reserva, response:Response):
         return {
             "detail":"cancha",
             "msg": "debe seleccionar una cancha valida"
+        }
+        
+    # Validar que usuario_id sea un entero mayor a 0
+    if not isinstance(reserva.usuario_id, int) or reserva.usuario_id <= 0:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return {
+            "detail":"usuario",
+            "msg": "debe seleccionar un usuario valida"
         }      
         
     
@@ -429,7 +437,15 @@ def update_reserva(reserva_id: int, reserva: Reserva,response:Response):
             return {
             "detail":"cancha",
             "msg": "debe seleccionar una cancha valida"
-        }      
+        }
+            
+         # Validar que usuario_id sea un entero mayor a 0
+        elif not isinstance(reserva.usuario_id, int) or reserva.usuario_id <= 0:
+            response.status_code = status.HTTP_400_BAD_REQUEST
+            return {
+            "detail":"usuario",
+            "msg": "debe seleccionar un usuario valida"
+        }          
         
     
     # Validar que horario_id sea un entero mayor a 0

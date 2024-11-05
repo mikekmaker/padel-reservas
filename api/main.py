@@ -585,7 +585,7 @@ async def get_horario_reserva(horario_id: int = Query(None, description="ID de h
 
     # Map cancha_id and usuario_id to their details
     cancha_map = {cancha['cancha_id']: cancha for cancha in canchas}
-    usuario_map = {usuario['id']: {'nombre': usuario['nombre'], 'apellido': usuario['apellido']} for usuario in usuarios}
+    usuario_map = {usuario['id']: { 'usuario_id': usuario['id'],'nombre': usuario['nombre'], 'apellido': usuario['apellido']} for usuario in usuarios}
 
     # Combine the data
     horarioreserva_array = []

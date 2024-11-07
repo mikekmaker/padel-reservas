@@ -526,7 +526,7 @@ def delete_reserva(reserva_id: int):
     
 
 #llamada a api externa
-PREFIX = "https://eecd-2800-40-16-31e-a519-7e5c-259a-1643.ngrok-free.app"
+PREFIX = "https://8933-2800-40-16-31e-4d4-675-9708-74e0.ngrok-free.app"
 HORARIOS_API_URL = "/api/horarios"
 CANCHAS_API_URL = "/api/canchas"
 USUARIOS_API_URL = "/api/usuarios"

@@ -531,9 +531,10 @@ HORARIOS_API_URL = "/api/horarios"
 CANCHAS_API_URL = "/api/canchas"
 USUARIOS_API_URL = "/api/usuarios"
 
+@app.get("/horariosreservas/{horario_id}/reserva/{reserva_id}")
 @app.get("/horariosreservas/{horario_id}")
 @app.get("/horariosreservas")
-async def get_horario_reserva(horario_id: Optional[int] = None):
+async def get_horario_reserva(horario_id: Optional[int] = None, reserva_id: Optional[int] = None):
     headers = {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
@@ -604,6 +605,10 @@ async def get_horario_reserva(horario_id: Optional[int] = None):
         }
 
         for reserva in reservas:
+            
+            if reserva_id is not None and reserva['reserva_id'] != reserva_id:
+                continue
+            
             if reserva['horario_id'] == horario['horario_id']:
                 cancha = cancha_map.get(reserva['cancha_id'], {})
                 usuario = usuario_map.get(reserva['usuario_id'], {})

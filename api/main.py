@@ -114,7 +114,7 @@ def init_db():
 init_db()
 
 # Ruta para crear un nuevo recordatorio (Alta)
-@app.post("/recordatorio",status_code=status.HTTP_201_CREATED)
+@app.post("/recordatorios",status_code=status.HTTP_201_CREATED)
 def create_recordatorio(recordatorio: Recordatorio,response:Response):
        
                      
@@ -199,7 +199,7 @@ async def get_recordatorios():
         status_code=status.HTTP_200_OK
     )
 # Ruta para modificar un recordatorio existente
-@app.put("/recordatorio/{id}",status_code=status.HTTP_200_OK)
+@app.put("/recordatorios/{id}",status_code=status.HTTP_200_OK)
 def update_recordatorio(id: int, recordatorio: Recordatorio,response:Response):
     conn = sqlite3.connect(db)
     c = conn.cursor()
@@ -268,7 +268,7 @@ def update_recordatorio(id: int, recordatorio: Recordatorio,response:Response):
         raise HTTPException(status_code=404, detail="Recordatorio no encontrado")
 
 # Ruta para eliminar un recordatorio por ID
-@app.delete("/recordatorio/{id}",status_code=status.HTTP_200_OK)
+@app.delete("/recordatorios/{id}",status_code=status.HTTP_200_OK)
 def delete_recordatorio(id: int):
     conn = sqlite3.connect(db)
     c = conn.cursor()
@@ -300,7 +300,7 @@ def delete_recordatorio(id: int):
         raise HTTPException(status_code=404, detail="Recordatorio no encontrado")
 
 # Ruta para crear una nueva reserva 
-@app.post('/reserva',status_code=status.HTTP_201_CREATED)
+@app.post('/reservas',status_code=status.HTTP_201_CREATED)
 
                      
 async def create_reserva(reserva: Reserva, response:Response):
@@ -374,7 +374,7 @@ async def create_reserva(reserva: Reserva, response:Response):
 
 # Ruta para obtener una reserva por su ID
 
-@app.get('/reserva/{reserva_id}',status_code=status.HTTP_200_OK)
+@app.get('/reservas/{reserva_id}',status_code=status.HTTP_200_OK)
 async def get_reserva(reserva_id: int):
     conn = sqlite3.connect(db)
     c = conn.cursor()
@@ -421,7 +421,7 @@ async def get_reservas():
     return JSONResponse(reservas_list)
    
 # Ruta para modificar una reserva existente
-@app.put("/reserva/{reserva_id}",status_code=status.HTTP_200_OK)
+@app.put("/reservas/{reserva_id}",status_code=status.HTTP_200_OK)
 def update_reserva(reserva_id: int, reserva: Reserva,response:Response):
     conn = sqlite3.connect(db)
     c = conn.cursor()
@@ -497,7 +497,7 @@ def update_reserva(reserva_id: int, reserva: Reserva,response:Response):
         raise HTTPException(status_code=404, detail="Reserva no encontrada")
 
 # Ruta para eliminar una reserva por ID
-@app.delete("/reserva/{reserva_id}",status_code=status.HTTP_200_OK)
+@app.delete("/reservas/{reserva_id}",status_code=status.HTTP_200_OK)
 def delete_reserva(reserva_id: int):
     conn = sqlite3.connect(db)
     c = conn.cursor()

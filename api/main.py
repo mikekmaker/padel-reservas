@@ -531,8 +531,9 @@ HORARIOS_API_URL = "/api/horarios"
 CANCHAS_API_URL = "/api/canchas"
 USUARIOS_API_URL = "/api/usuarios"
 
+@app.get("/horariosreservas/{horario_id}")
 @app.get("/horariosreservas")
-async def get_horario_reserva(horario_id: int = Query(None, description="ID de horario a filtrar")):
+async def get_horario_reserva(horario_id: Optional[int] = None):
     headers = {
         'Content-Type': 'application/json',
         'Accept': 'application/json'

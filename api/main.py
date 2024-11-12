@@ -340,10 +340,7 @@ async def create_reserva(reserva: Reserva, response:Response):
     
     # Validar que num_personas sea un entero mayor a 0
     elif not isinstance(reserva.num_personas, int) or reserva.num_personas <= 0 or reserva.num_personas > 16:
-        response.status_code = status.HTTP_400_BAD_REQUEST
-    
-                                                                   
-                    
+        response.status_code = status.HTTP_400_BAD_REQUEST         
         return {
             "detail":"jugadores",
             "msg": "debe haber al menos 1 jugador y hasta 16 jugadores"
@@ -463,11 +460,11 @@ def update_reserva(reserva_id: int, reserva: Reserva,response:Response):
         }      
     
     # Validar que num_personas sea un entero mayor a 0
-        elif not isinstance(reserva.num_personas, int) or reserva.num_personas <= 0:
+        elif not isinstance(reserva.num_personas, int) or reserva.num_personas <= 0 or reserva.num_personas > 16:
             response.status_code = status.HTTP_400_BAD_REQUEST
             return {
             "detail":"jugadores",
-            "msg": "debe haber al menos 1 jugador"
+            "msg": "debe haber al menos 1 jugador y hasta 16 jugadores"
         } 
 
     if existing_reserva:

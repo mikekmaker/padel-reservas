@@ -300,9 +300,7 @@ def delete_recordatorio(id: int):
         raise HTTPException(status_code=404, detail="Recordatorio no encontrado")
 
 # Ruta para crear una nueva reserva 
-@app.post('/reservas',status_code=status.HTTP_201_CREATED)
-
-                     
+@app.post('/reservas',status_code=status.HTTP_201_CREATED)                    
 async def create_reserva(reserva: Reserva, response:Response):
                                                  
                      
@@ -341,14 +339,14 @@ async def create_reserva(reserva: Reserva, response:Response):
         }      
     
     # Validar que num_personas sea un entero mayor a 0
-    elif not isinstance(reserva.num_personas, int) or reserva.num_personas <= 0:
+    elif not isinstance(reserva.num_personas, int) or reserva.num_personas <= 0 or reserva.num_personas > 16:
         response.status_code = status.HTTP_400_BAD_REQUEST
     
                                                                    
                     
         return {
             "detail":"jugadores",
-            "msg": "debe haber al menos 1 jugador"
+            "msg": "debe haber al menos 1 jugador y hasta 16 jugadores"
                                         
         } 
     
